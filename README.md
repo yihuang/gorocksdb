@@ -16,3 +16,13 @@ Please note that this package might upgrade the required RocksDB version at any 
 Vendoring is thus highly recommended if you require high stability.
 
 *The [embedded CockroachDB RocksDB](https://github.com/cockroachdb/c-rocksdb) is no longer supported in gorocksdb.*
+
+
+## Exact example of building a cosmos chain on a mac 
+
+
+```bash
+CGO_CFLAGS="-I/opt/homebrew/Cellar/rocksdb/6.27.3/include" \
+CGO_LDFLAGS="-L/opt/homebrew/Cellar/rocksdb/6.27.3/lib -lrocksdb -lstdc++ -lm -lz -lbz2 -lsnappy -llz4 -lzstd -L/opt/homebrew/Cellar/snappy/1.1.9/lib -L/opt/homebrew/Cellar/lz4/1.9.3/lib/ -L /opt/homebrew/Cellar/zstd/1.5.0/lib/"  \
+go install -tags rocksdb ./...
+```
