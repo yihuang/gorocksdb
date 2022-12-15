@@ -22,3 +22,15 @@ func NewCompressionOptions(windowBits, level, strategy, maxDictBytes int) *Compr
 		MaxDictBytes: maxDictBytes,
 	}
 }
+
+type ZSTDCompressionOptions struct {
+	UseDictTrainer int8
+	MaxTrainBytes  int
+}
+
+func NewZSTDCompressionOptions(useDictTrainer int8, maxTrainBytes int) *ZSTDCompressionOptions {
+	return &ZSTDCompressionOptions{
+		UseDictTrainer: useDictTrainer,
+		MaxTrainBytes:  maxTrainBytes,
+	}
+}
