@@ -138,12 +138,6 @@ func (opts *BlockBasedTableOptions) SetPartitionFilters(value bool) {
 	C.rocksdb_block_based_options_set_partition_filters(opts.c, boolToChar(value))
 }
 
-// SetOptimizeFiltersForMemory sets the option to generate Bloom/Ribbon filters that minimize memory
-// internal fragmentation.
-func (opts *BlockBasedTableOptions) SetOptimizeFiltersForMemory(value bool) {
-	C.rocksdb_block_based_options_set_optimize_filters_for_memory(opts.c, boolToChar(value))
-}
-
 // SetUseDeltaEncoding sets using delta encoding to compress keys in blocks.
 // ReadOptions::pin_data requires this option to be disabled.
 func (opts *BlockBasedTableOptions) SetUseDeltaEncoding(value bool) {
