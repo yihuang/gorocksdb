@@ -88,6 +88,28 @@ func OpenDbForReadOnly(opts *Options, name string, errorIfLogFileExist bool) (*D
 	}, nil
 }
 
+// OpenDbAsSecondary opens a database with the specified options as secondary instance.
+func OpenDbAsSecondary(opts *Options, name string, secondaryPath string) (*DB, error) {
+	var (
+		cErr          *C.char
+		cName         = C.CString(name)
+		cSeconrayPath = C.CString(secondaryPath)
+	)
+	defer C.free(unsafe.Pointer(cName))
+	defer C.free(unsafe.Pointer(&cSeconrayPath))
+	db := C.rocksdb_open_as_secondary(opts.c, cName, cSecondaryPath, &cErr)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return nil, errors.New(C.GoString(cErr))
+	}
+	return &DB{
+		c:      db,
+		closer: dbClose,
+		name:   name,
+		opts:   opts,
+	}, nil
+}
+
 // OpenDbColumnFamilies opens a database with the specified column families.
 func OpenDbColumnFamilies(
 	opts *Options,
@@ -186,6 +208,74 @@ func OpenDbForReadOnlyColumnFamilies(
 	db := C.rocksdb_open_for_read_only_column_families(
 		opts.c,
 		cName,
+		C.int(numColumnFamilies),
+		&cNames[0],
+		&cOpts[0],
+		&cHandles[0],
+		boolToChar(errorIfLogFileExist),
+		&cErr,
+	)
+	if cErr != nil {
+		defer C.rocksdb_free(unsafe.Pointer(cErr))
+		return nil, nil, errors.New(C.GoString(cErr))
+	}
+
+	cfHandles := make([]*ColumnFamilyHandle, numColumnFamilies)
+	for i, c := range cHandles {
+		cfHandles[i] = NewNativeColumnFamilyHandle(c)
+	}
+
+	return &DB{
+		c:      db,
+		closer: dbClose,
+		name:   name,
+		opts:   opts,
+	}, cfHandles, nil
+}
+
+// OpenDbAsSecondaryColumnFamilies opens a database with the specified column
+// families as secondary instance.
+func OpenDbAsSecondaryColumnFamilies(
+	opts *Options,
+	name string,
+	secondaryPath string,
+	cfNames []string,
+	cfOpts []*Options,
+	errorIfLogFileExist bool,
+) (*DB, []*ColumnFamilyHandle, error) {
+	numColumnFamilies := len(cfNames)
+	if numColumnFamilies != len(cfOpts) {
+		return nil, nil, errors.New("must provide the same number of column family names and options")
+	}
+
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+
+	cSeconrayPath := C.CString(secondaryPath)
+	defer C.free(unsafe.Pointer(&cSeconrayPath))
+
+	cNames := make([]*C.char, numColumnFamilies)
+	for i, s := range cfNames {
+		cNames[i] = C.CString(s)
+	}
+	defer func() {
+		for _, s := range cNames {
+			C.free(unsafe.Pointer(s))
+		}
+	}()
+
+	cOpts := make([]*C.rocksdb_options_t, numColumnFamilies)
+	for i, o := range cfOpts {
+		cOpts[i] = o.c
+	}
+
+	cHandles := make([]*C.rocksdb_column_family_handle_t, numColumnFamilies)
+
+	var cErr *C.char
+	db := C.rocksdb_open_as_secondary_column_families(
+		opts.c,
+		cName,
+		cSeconrayPath,
 		C.int(numColumnFamilies),
 		&cNames[0],
 		&cOpts[0],
