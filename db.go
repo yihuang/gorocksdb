@@ -91,12 +91,12 @@ func OpenDbForReadOnly(opts *Options, name string, errorIfLogFileExist bool) (*D
 // OpenDbAsSecondary opens a database with the specified options as secondary instance.
 func OpenDbAsSecondary(opts *Options, name string, secondaryPath string) (*DB, error) {
 	var (
-		cErr          *C.char
-		cName         = C.CString(name)
-		cSeconrayPath = C.CString(secondaryPath)
+		cErr           *C.char
+		cName          = C.CString(name)
+		cSecondaryPath = C.CString(secondaryPath)
 	)
 	defer C.free(unsafe.Pointer(cName))
-	defer C.free(unsafe.Pointer(&cSeconrayPath))
+	defer C.free(unsafe.Pointer(&cSecondaryPath))
 	db := C.rocksdb_open_as_secondary(opts.c, cName, cSecondaryPath, &cErr)
 	if cErr != nil {
 		defer C.rocksdb_free(unsafe.Pointer(cErr))
@@ -241,7 +241,6 @@ func OpenDbAsSecondaryColumnFamilies(
 	secondaryPath string,
 	cfNames []string,
 	cfOpts []*Options,
-	errorIfLogFileExist bool,
 ) (*DB, []*ColumnFamilyHandle, error) {
 	numColumnFamilies := len(cfNames)
 	if numColumnFamilies != len(cfOpts) {
@@ -280,7 +279,6 @@ func OpenDbAsSecondaryColumnFamilies(
 		&cNames[0],
 		&cOpts[0],
 		&cHandles[0],
-		boolToChar(errorIfLogFileExist),
 		&cErr,
 	)
 	if cErr != nil {
