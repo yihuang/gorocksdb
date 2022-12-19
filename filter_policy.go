@@ -36,3 +36,16 @@ func NewBloomFilter(bitsPerKey int) nativeFilterPolicy {
 func NewBloomFilterFull(bitsPerKey int) nativeFilterPolicy {
 	return NewNativeFilterPolicy(C.rocksdb_filterpolicy_create_bloom_full(C.double(bitsPerKey)))
 }
+
+// NewRibbonFilter returns a new filter policy that uses a ribbon filter with approximately
+// the specified number of bits per key.  A good value for bits_per_key
+// is 9.9, which yields a filter with ~1% false positive rate.
+func NewRibbonFilter(bloomEquivalentBitsPerKey float64) nativeFilterPolicy {
+	return NewNativeFilterPolicy(C.rocksdb_filterpolicy_create_ribbon(C.double(bloomEquivalentBitsPerKey)))
+}
+
+// NewRibbonHybridFilter returns a new filter policy that use both bloom and ribbon filters,
+// bloom filters are used for top levels while ribbon filters are used for lower ones.
+func NewRibbonHybridFilter(bloomEquivalentBitsPerKey float64, bloomBeforeLevel int) nativeFilterPolicy {
+	return NewNativeFilterPolicy(C.rocksdb_filterpolicy_create_ribbon_hybrid(C.double(bloomEquivalentBitsPerKey), C.int(bloomBeforeLevel)))
+}
